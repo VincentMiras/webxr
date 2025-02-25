@@ -46,11 +46,11 @@ import { XRButton } from 'three/addons/webxr/XRButton.js';
 // Consider using alternatives like Oimo or cannon-es
 import {
   OrbitControls
-} from 'three/addons/controls/OrbitControls.js';
+} from 'three/examples/jsm/controls/OrbitControls.js';
 
 import {
   GLTFLoader
-} from 'three/addons/loaders/GLTFLoader.js';
+} from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // Example of hard link to official repo for data, if needed
 // const MODEL_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/r173/examples/models/gltf/LeePerrySmith/LeePerrySmith.glb';
