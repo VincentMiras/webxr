@@ -4,11 +4,11 @@ import glsl from 'vite-plugin-glsl';
 
 export default defineConfig({
     base: "/webxr",
-    resolve: {
-        alias: {
-            three: '/node_modules/three'
-        }
-    },
+    // resolve: {
+    //     alias: {
+    //         three: '/node_modules/three'
+    //     }
+    // },
     clearScreen: false,
     optimizeDeps: {
         esbuildOptions: {
