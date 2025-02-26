@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@iwer/devui": "^0.1.1",
+    "@tweenjs/tween.js": "^25.0.0",
     "iwer": "^1.0.4",
     "three": "^0.173.0"
   }

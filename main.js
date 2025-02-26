@@ -11,6 +11,7 @@ let reticle;
 let hitTestSource = null;
 let hitTestSourceRequested = false;
 
+let arrows = [];
 init();
 
 function init() {
@@ -40,10 +41,11 @@ function init() {
   document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
   const geometry = new THREE.CylinderGeometry(0, 0.05, 0.2, 32).rotateX(Math.PI / 2);
   const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-  const mesh = new THREE.Mesh(geometry, material);
+
 
   function onSelect() {
     if (reticle.visible) {
+      const mesh = new THREE.Mesh(geometry, material);
       mesh.position.set(0, 0, 0).applyMatrix4(controller.matrixWorld);
 
       const harrowClone = half_arrow.clone();
@@ -70,14 +72,44 @@ function init() {
   });
 
 
-  ///// TIRER FELECHE /////////////
+  /////////////// TIRER FELECHE //////////////////
   function shootArrow() {
-
     const arrowClone = arrow.clone();
-    arrowClone.position.set(0, 0, - 0.3).applyMatrix4(controller.matrixWorld);
-    arrowClone.quaternion.setFromRotationMatrix(controller.matrixWorld);
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const vector = new THREE.Vector3(
+      (centerX / width) * 2 - 1,
+      -(centerY / height) * 2 + 1,
+      0.5
+    );
+
+    vector.unproject(camera);
+
+    const direction = vector.sub(camera.position).normalize();
+
+    arrowClone.position.copy(camera.position);
+    arrowClone.lookAt(camera.position.clone().add(direction));
+
+    const impulse = 0.7;
+    const velocity = direction.multiplyScalar(impulse);
+    arrowClone.userData.velocity = velocity;
+
+
+    arrowClone.userData.distmax = 10
+    if (reticle.visible = true) {
+      const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
+      const distanceToReticle = camera.position.distanceTo(reticlePosition);
+      arrowClone.userData.distmax = distanceToReticle;
+    }
+
     scene.add(arrowClone);
+    arrows.push(arrowClone);
   }
+
 
   controller = renderer.xr.getController(0);
   controller.addEventListener('select', shootArrow);
@@ -102,8 +134,18 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function update_arrows() {
 
+function updateArrows() {
+  for (let i = 0; i < arrows.length; i++) {
+    const arrow = arrows[i];
+    arrow.position.add(arrow.userData.velocity);
+
+    if (arrow.position.distanceTo(controller.position) > arrow.userData.distmax) {
+      scene.remove(arrow);
+      arrows.splice(i, 1);
+      i--;
+    }
+  }
 }
 
 
@@ -136,10 +178,11 @@ function hittest(frame) {
     }
   }
 }
-//
 
 function animate(timestamp, frame) {
 
   hittest(frame)
+  updateArrows()
   renderer.render(scene, camera);
+
 }
