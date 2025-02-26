@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 let container;
 let camera, scene, renderer;
@@ -12,6 +13,7 @@ let hitTestSource = null;
 let hitTestSourceRequested = false;
 
 let arrows = [];
+let targets = [];
 init();
 
 function init() {
@@ -60,6 +62,7 @@ function init() {
   ////// ARROW ////////////
   let arrow = null
   const loader = new GLTFLoader().setPath('/webxr/assets/models/');
+
   loader.load('Arrow.glb', (gltf) => {
     arrow = gltf.scene
     arrow.rotation.x -= Math.PI / 2;
@@ -71,6 +74,43 @@ function init() {
     half_arrow.rotation.x -= Math.PI / 2;
   });
 
+  let sk = null
+  loader.load('Skeleton.glb', (gltf) => {
+    sk = gltf.scene
+    sk.scale.set(1.4, 1.4, 1.4);
+    sk.userData.animations = gltf.animations;
+    setInterval(spawnSkeleton, 3000);
+  });
+
+  ///////////////
+  function spawnSkeleton() {
+    if (!sk) return;
+
+    const skClone = SkeletonUtils.clone(sk);
+    const spawnPosition = getRandomPosition();
+    skClone.position.set(spawnPosition.x, spawnPosition.y, spawnPosition.z);
+    scene.add(skClone);
+
+    targets.push({ enemy: skClone, score: 10 });
+
+    const mixer = new THREE.AnimationMixer(skClone);
+    skClone.userData.mixer = mixer;
+    skClone.userData.animations = sk.userData.animations;
+    const action = mixer.clipAction(sk.userData.animations[10]);
+    action.play();
+  }
+
+  ////////////////////////////////////// position aleatoire ////////////////////////////////////////////////////////////////////////
+  function getRandomPosition() {
+    const minX = -10, maxX = 10;
+    const minZ = -10, maxZ = 10;
+    const y = -1;
+
+    const x = Math.random() * (maxX - minX) + minX;
+    const z = Math.random() * (maxZ - minZ) + minZ;
+
+    return new THREE.Vector3(x, y, z);
+  }
 
   /////////////// TIRER FELECHE //////////////////
   function shootArrow() {
