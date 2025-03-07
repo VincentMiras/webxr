@@ -25,6 +25,9 @@ function init() {
 
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
+  const clock = new THREE.Clock();
+
+
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
@@ -77,7 +80,7 @@ function init() {
   let sk = null
   loader.load('Skeleton.glb', (gltf) => {
     sk = gltf.scene
-    sk.scale.set(1.4, 1.4, 1.4);
+    sk.scale.set(1.2, 1.2, 1.2);
     sk.userData.animations = gltf.animations;
     setInterval(spawnSkeleton, 3000);
   });
@@ -91,13 +94,26 @@ function init() {
     skClone.position.set(spawnPosition.x, spawnPosition.y, spawnPosition.z);
     scene.add(skClone);
 
-    targets.push({ enemy: skClone, score: 10 });
+
 
     const mixer = new THREE.AnimationMixer(skClone);
     skClone.userData.mixer = mixer;
     skClone.userData.animations = sk.userData.animations;
     const action = mixer.clipAction(sk.userData.animations[10]);
     action.play();
+
+    const boundingBox = new THREE.Box3(
+      new THREE.Vector3(-0.5, -1, -0.5),  // Coin inférieur gauche de la boîte
+      new THREE.Vector3(0.5, 1, 0.5)      // Coin supérieur droit de la boîte
+    );
+
+    // Applique la position du squelette à la boîte de délimitation
+    boundingBox.translate(new THREE.Vector3(skClone.position.x, 0, skClone.position.z));
+    const boxHelper = new THREE.Box3Helper(boundingBox, 0xffff00); // La couleur jaune ici
+    skClone.userData.boundingBox = boundingBox;
+    targets.push({ enemy: skClone, score: 10 });
+    // Ajoute le Box3Helper à la scène
+    scene.add(boxHelper);
   }
 
   ////////////////////////////////////// position aleatoire ////////////////////////////////////////////////////////////////////////
@@ -139,7 +155,7 @@ function init() {
     arrowClone.userData.velocity = velocity;
 
 
-    arrowClone.userData.distmax = 10
+    arrowClone.userData.distmax = 50
     if (reticle.visible = true) {
       const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
       const distanceToReticle = camera.position.distanceTo(reticlePosition);
@@ -180,6 +196,24 @@ function updateArrows() {
     const arrow = arrows[i];
     arrow.position.add(arrow.userData.velocity);
 
+    // Vérification de collision avec les squelettes
+    for (let j = 0; j < targets.length; j++) {
+      const { enemy, isDead } = targets[j];
+      if (!isDead) {
+
+        // Met à jour la bounding box du squelette
+        const boundingBox = enemy.userData.boundingBox;
+
+        // Vérifier si la flèche est à l'intérieur de la bounding box (en utilisant intersectsBox)
+        if (boundingBox.intersectsBox(arrow.position)) {
+          // Marquer l'ennemi comme mort et le supprimer de la scène
+          enemy.visible = false; // Masquer le squelette
+          targets[j].isDead = true;
+          scene.remove(enemy);
+        }
+      }
+    }
+
     if (arrow.position.distanceTo(controller.position) > arrow.userData.distmax) {
       scene.remove(arrow);
       arrows.splice(i, 1);
@@ -188,6 +222,24 @@ function updateArrows() {
   }
 }
 
+
+let clock = new THREE.Clock();
+
+function update_enemy() {
+  const delta = clock.getDelta();
+  targets.forEach(({ enemy, isDead }) => {
+    if (!isDead) {
+
+      const direction = new THREE.Vector3();
+      direction.subVectors(camera.position, enemy.position).setY(0).normalize();
+      enemy.rotation.y = Math.atan2(direction.x, direction.z);
+    }
+
+    if (enemy.userData.mixer) {
+      enemy.userData.mixer.update(delta);
+    }
+  });
+}
 
 function hittest(frame) {
   if (frame) {
@@ -224,5 +276,6 @@ function animate(timestamp, frame) {
   hittest(frame)
   updateArrows()
   renderer.render(scene, camera);
+  update_enemy();
 
 }
