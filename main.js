@@ -14,6 +14,8 @@ let hitTestSourceRequested = false;
 
 let arrows = [];
 let targets = [];
+let deathsound = null;  // Declare deathsound here
+
 init();
 
 function init() {
@@ -59,6 +61,35 @@ function init() {
 
       scene.add(harrowClone);
     }
+  }
+
+
+  /////// AUDIO ////////
+
+  function startAudioContext() {
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+    const audioLoader = new THREE.AudioLoader();
+
+    // Create the audio context manually
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Create a positional audio object using the listener
+    deathsound = new THREE.PositionalAudio(listener);
+
+    // Load the audio file and set it up
+    audioLoader.load('/webxr/assets/sounds/sk_death.mp3', (buffer) => {
+      deathsound.setBuffer(buffer);
+      deathsound.setRefDistance(1);
+      deathsound.setVolume(0.5);
+    });
+
+    // Ensure the AudioContext is triggered after user interaction
+    document.body.addEventListener('click', function () {
+      if (audioContext.state === 'suspended') {
+        audioContext.resume(); // Manually resume the audio context
+      }
+    });
   }
 
 
@@ -167,6 +198,8 @@ function init() {
   controller = renderer.xr.getController(0);
   controller.addEventListener('select', shootArrow);
   controller.addEventListener('select', onSelect);
+  controller.addEventListener('select', startAudioContext);
+
   scene.add(controller);
 
   reticle = new THREE.Mesh(
@@ -217,6 +250,9 @@ function updateArrows() {
 }
 
 function killenemy(enemy) {
+  if (enemy.userData.isDead) return;
+
+  enemy.userData.isDead = true;
   enemy.userData.mixer.stopAllAction();
   const hitAnimation = enemy.userData.animations[0];
   if (hitAnimation) {
@@ -226,8 +262,15 @@ function killenemy(enemy) {
     action.clampWhenFinished = true;
     action.play();
 
+    if (deathsound) {
+      deathsound.position.copy(enemy.position); // Positionner l'audio au même endroit que le squelette
+      deathsound.play();
+    }
+
+
     action.getMixer().addEventListener("finished", () => {
       scene.remove(enemy);
+      scene.remove(enemy.userData.boundingBox)
       targets = targets.filter((t) => t !== enemy);
     });
   }
