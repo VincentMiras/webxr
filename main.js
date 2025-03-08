@@ -80,7 +80,7 @@ function init() {
   let sk = null
   loader.load('Skeleton.glb', (gltf) => {
     sk = gltf.scene
-    sk.scale.set(1.2, 1.2, 1.2);
+    sk.scale.set(1, 1, 1);
     sk.userData.animations = gltf.animations;
     setInterval(spawnSkeleton, 3000);
   });
@@ -104,7 +104,7 @@ function init() {
 
     const boundingBox = new THREE.Box3(
       new THREE.Vector3(-0.5, -1, -0.5),  // Coin inférieur gauche de la boîte
-      new THREE.Vector3(0.5, 1, 0.5)      // Coin supérieur droit de la boîte
+      new THREE.Vector3(0.5, 0.5, 0.5)      // Coin supérieur droit de la boîte
     );
 
     // Applique la position du squelette à la boîte de délimitation
@@ -156,7 +156,7 @@ function init() {
 
 
     arrowClone.userData.distmax = 50
-    if (reticle.visible = true) {
+    if (reticle.visible === true) {
       const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
       const distanceToReticle = camera.position.distanceTo(reticlePosition);
       arrowClone.userData.distmax = distanceToReticle;
@@ -201,11 +201,11 @@ function updateArrows() {
       const { enemy, isDead } = targets[j];
       if (!isDead) {
 
-        // Met à jour la bounding box du squelette
-        const boundingBox = enemy.userData.boundingBox;
+        let boundingBox = enemy.userData.boundingBox;
+        let arrowbox = new THREE.Box3().setFromObject(arrow);
 
         // Vérifier si la flèche est à l'intérieur de la bounding box (en utilisant intersectsBox)
-        if (boundingBox.intersectsBox(arrow.position)) {
+        if (boundingBox.intersectsBox(arrowbox)) {
           // Marquer l'ennemi comme mort et le supprimer de la scène
           enemy.visible = false; // Masquer le squelette
           targets[j].isDead = true;
@@ -215,6 +215,7 @@ function updateArrows() {
     }
 
     if (arrow.position.distanceTo(controller.position) > arrow.userData.distmax) {
+      console.log((arrow.position.distanceTo(controller.position)));
       scene.remove(arrow);
       arrows.splice(i, 1);
       i--;
