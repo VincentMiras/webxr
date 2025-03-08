@@ -109,11 +109,8 @@ function init() {
 
     // Applique la position du squelette à la boîte de délimitation
     boundingBox.translate(new THREE.Vector3(skClone.position.x, 0, skClone.position.z));
-    const boxHelper = new THREE.Box3Helper(boundingBox, 0xffff00); // La couleur jaune ici
     skClone.userData.boundingBox = boundingBox;
     targets.push({ enemy: skClone, score: 10 });
-    // Ajoute le Box3Helper à la scène
-    scene.add(boxHelper);
   }
 
   ////////////////////////////////////// position aleatoire ////////////////////////////////////////////////////////////////////////
@@ -155,7 +152,7 @@ function init() {
     arrowClone.userData.velocity = velocity;
 
 
-    arrowClone.userData.distmax = 50
+    arrowClone.userData.distmax = 30
     if (reticle.visible === true) {
       const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
       const distanceToReticle = camera.position.distanceTo(reticlePosition);
@@ -204,18 +201,14 @@ function updateArrows() {
         let boundingBox = enemy.userData.boundingBox;
         let arrowbox = new THREE.Box3().setFromObject(arrow);
 
-        // Vérifier si la flèche est à l'intérieur de la bounding box (en utilisant intersectsBox)
+
         if (boundingBox.intersectsBox(arrowbox)) {
-          // Marquer l'ennemi comme mort et le supprimer de la scène
-          enemy.visible = false; // Masquer le squelette
-          targets[j].isDead = true;
-          scene.remove(enemy);
+          killenemy(enemy)
         }
       }
     }
 
     if (arrow.position.distanceTo(controller.position) > arrow.userData.distmax) {
-      console.log((arrow.position.distanceTo(controller.position)));
       scene.remove(arrow);
       arrows.splice(i, 1);
       i--;
@@ -223,6 +216,22 @@ function updateArrows() {
   }
 }
 
+function killenemy(enemy) {
+  enemy.userData.mixer.stopAllAction();
+  const hitAnimation = enemy.userData.animations[0];
+  if (hitAnimation) {
+    const action = enemy.userData.mixer.clipAction(hitAnimation);
+    action.reset();
+    action.setLoop(THREE.LoopOnce);
+    action.clampWhenFinished = true;
+    action.play();
+
+    action.getMixer().addEventListener("finished", () => {
+      scene.remove(enemy);
+      targets = targets.filter((t) => t !== enemy);
+    });
+  }
+}
 
 let clock = new THREE.Clock();
 
