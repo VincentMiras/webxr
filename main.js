@@ -130,7 +130,7 @@ function init() {
     const mixer = new THREE.AnimationMixer(skClone);
     skClone.userData.mixer = mixer;
     skClone.userData.animations = sk.userData.animations;
-    const action = mixer.clipAction(sk.userData.animations[10]);
+    const action = mixer.clipAction(sk.userData.animations[12]);
     action.play();
 
     const boundingBox = new THREE.Box3(
@@ -285,14 +285,39 @@ function update_enemy() {
 
       const direction = new THREE.Vector3();
       direction.subVectors(camera.position, enemy.position).setY(0).normalize();
-      enemy.rotation.y = Math.atan2(direction.x, direction.z);
-    }
 
-    if (enemy.userData.mixer) {
-      enemy.userData.mixer.update(delta);
+      const distanceToCamera = enemy.position.distanceTo(camera.position);
+
+      enemy.rotation.y = Math.atan2(direction.x, direction.z);
+
+      const speed = 0.005;
+      if (distanceToCamera > 2) {
+
+        const movement = direction.multiplyScalar(speed);
+        enemy.position.add(movement);
+      } else {
+        if (!enemy.userData.isAttacking) {
+          enemy.userData.isAttacking = true;
+
+          const attackAnimation = enemy.userData.animations[11];
+          if (attackAnimation) {
+            const action = enemy.userData.mixer.clipAction(attackAnimation);
+            action.reset();
+            action.clampWhenFinished = true;
+            action.play();
+          }
+        }
+      }
+
+      // Si l'ennemi a un mixer d'animation, mettre à jour l'animation
+      if (enemy.userData.mixer) {
+        enemy.userData.mixer.update(delta); // Mise à jour de l'animation avec le temps écoulé
+      }
     }
   });
 }
+
+
 
 function hittest(frame) {
   if (frame) {
