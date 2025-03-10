@@ -292,31 +292,50 @@ function update_enemy() {
 
       const speed = 0.005;
       if (distanceToCamera > 2) {
-
         const movement = direction.multiplyScalar(speed);
         enemy.position.add(movement);
+
+        if (enemy.userData.isAttacking) {
+          const attackAction = enemy.userData.mixer.clipAction(enemy.userData.animations[11]);
+          attackAction.stop();
+          enemy.userData.isAttacking = false;
+        }
+        if (!enemy.userData.isWalking) {
+          const walkAnimation = enemy.userData.animations[12];
+          if (walkAnimation) {
+            const action = enemy.userData.mixer.clipAction(walkAnimation);
+            action.play();
+            enemy.userData.isWalking = true;
+          }
+        }
       } else {
         if (!enemy.userData.isAttacking) {
-          enemy.userData.isAttacking = true;
-
           const attackAnimation = enemy.userData.animations[11];
           if (attackAnimation) {
             const action = enemy.userData.mixer.clipAction(attackAnimation);
             action.reset();
             action.clampWhenFinished = true;
             action.play();
+            enemy.userData.isAttacking = true;
+          }
+          if (enemy.userData.isWalking) {
+            const walkAnimation = enemy.userData.animations[12];
+            if (walkAnimation) {
+              const action = enemy.userData.mixer.clipAction(walkAnimation);
+              action.stop();
+              enemy.userData.isWalking = false;
+            }
           }
         }
       }
 
-      // Si l'ennemi a un mixer d'animation, mettre à jour l'animation
+
       if (enemy.userData.mixer) {
-        enemy.userData.mixer.update(delta); // Mise à jour de l'animation avec le temps écoulé
+        enemy.userData.mixer.update(delta);
       }
     }
   });
 }
-
 
 
 function hittest(frame) {
