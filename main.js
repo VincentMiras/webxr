@@ -158,7 +158,6 @@ function init() {
 
   /////////////// TIRER FELECHE //////////////////
   function shootArrow() {
-    console.log(Date.now() - last_shot)
     if (Date.now() - last_shot > 500) {
       const arrowClone = arrow.clone();
 
@@ -194,7 +193,6 @@ function init() {
 
       scene.add(arrowClone);
       arrows.push(arrowClone);
-      console.log("shoot");
       last_shot = Date.now();
     }
   }
@@ -322,6 +320,15 @@ function update_enemy() {
             action.clampWhenFinished = true;
             action.play();
             enemy.userData.isAttacking = true;
+            action.getMixer().addEventListener('finished', function onAttackFinished(event) {
+              if (event.action === action) {
+                // Réduire les vies lorsque l'animation d'attaque est terminée
+                lives -= 1;
+                console.log("Lives restantes : " + lives);
+                // On peut aussi retirer l'écouteur une fois qu'il est utilisé pour éviter plusieurs appels
+                event.target.removeEventListener('finished', onAttackFinished);
+              }
+            });
           }
           if (enemy.userData.isWalking) {
             const walkAnimation = enemy.userData.animations[12];
@@ -379,5 +386,6 @@ function animate(timestamp, frame) {
   updateArrows()
   renderer.render(scene, camera);
   update_enemy();
+
 
 }
