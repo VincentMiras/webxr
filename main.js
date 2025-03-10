@@ -14,7 +14,10 @@ let hitTestSourceRequested = false;
 
 let arrows = [];
 let targets = [];
-let deathsound = null;  // Declare deathsound here
+let deathsound = null;
+let lives = 5;
+let last_shot = Date.now();
+
 
 init();
 
@@ -26,9 +29,6 @@ function init() {
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-
-  const clock = new THREE.Clock();
-
 
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
@@ -81,13 +81,13 @@ function init() {
     audioLoader.load('/webxr/assets/sounds/sk_death.mp3', (buffer) => {
       deathsound.setBuffer(buffer);
       deathsound.setRefDistance(1);
-      deathsound.setVolume(0.5);
+      deathsound.setVolume(0.25);
     });
 
     // Ensure the AudioContext is triggered after user interaction
     document.body.addEventListener('click', function () {
       if (audioContext.state === 'suspended') {
-        audioContext.resume(); // Manually resume the audio context
+        audioContext.resume();
       }
     });
   }
@@ -158,40 +158,45 @@ function init() {
 
   /////////////// TIRER FELECHE //////////////////
   function shootArrow() {
-    const arrowClone = arrow.clone();
+    console.log(Date.now() - last_shot)
+    if (Date.now() - last_shot > 500) {
+      const arrowClone = arrow.clone();
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const centerX = width / 2;
-    const centerY = height / 2;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
 
-    const vector = new THREE.Vector3(
-      (centerX / width) * 2 - 1,
-      -(centerY / height) * 2 + 1,
-      0.5
-    );
+      const vector = new THREE.Vector3(
+        (centerX / width) * 2 - 1,
+        -(centerY / height) * 2 + 1,
+        0.5
+      );
 
-    vector.unproject(camera);
+      vector.unproject(camera);
 
-    const direction = vector.sub(camera.position).normalize();
+      const direction = vector.sub(camera.position).normalize();
 
-    arrowClone.position.copy(camera.position);
-    arrowClone.lookAt(camera.position.clone().add(direction));
+      arrowClone.position.copy(camera.position);
+      arrowClone.lookAt(camera.position.clone().add(direction));
 
-    const impulse = 0.7;
-    const velocity = direction.multiplyScalar(impulse);
-    arrowClone.userData.velocity = velocity;
+      const impulse = 0.7;
+      const velocity = direction.multiplyScalar(impulse);
+      arrowClone.userData.velocity = velocity;
 
 
-    arrowClone.userData.distmax = 30
-    if (reticle.visible === true) {
-      const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
-      const distanceToReticle = camera.position.distanceTo(reticlePosition);
-      arrowClone.userData.distmax = distanceToReticle;
+      arrowClone.userData.distmax = 30
+      if (reticle.visible === true) {
+        const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
+        const distanceToReticle = camera.position.distanceTo(reticlePosition);
+        arrowClone.userData.distmax = distanceToReticle;
+      }
+
+      scene.add(arrowClone);
+      arrows.push(arrowClone);
+      console.log("shoot");
+      last_shot = Date.now();
     }
-
-    scene.add(arrowClone);
-    arrows.push(arrowClone);
   }
 
 
