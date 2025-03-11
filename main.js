@@ -15,7 +15,8 @@ let hitTestSourceRequested = false;
 let arrows = [];
 let targets = [];
 let deathsound = null;
-let lives = 5;
+let damagesound = null;
+let lives = 15;
 let last_shot = Date.now();
 
 
@@ -71,17 +72,19 @@ function init() {
     camera.add(listener);
     const audioLoader = new THREE.AudioLoader();
 
-    // Create the audio context manually
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Create a positional audio object using the listener
     deathsound = new THREE.PositionalAudio(listener);
-
-    // Load the audio file and set it up
     audioLoader.load('/webxr/assets/sounds/sk_death.mp3', (buffer) => {
       deathsound.setBuffer(buffer);
       deathsound.setRefDistance(1);
       deathsound.setVolume(0.25);
+    });
+
+    damagesound = new THREE.Audio(listener);
+    audioLoader.load('/webxr/assets/sounds/capi_death.mp3', (buffer) => {
+      damagesound.setBuffer(buffer);
+      damagesound.setVolume(0.25);
     });
 
     // Ensure the AudioContext is triggered after user interaction
@@ -307,6 +310,7 @@ function update_enemy() {
           const walkAnimation = enemy.userData.animations[12];
           if (walkAnimation) {
             const action = enemy.userData.mixer.clipAction(walkAnimation);
+            action.setEffectiveTimeScale(0.75);
             action.play();
             enemy.userData.isWalking = true;
           }
@@ -316,17 +320,18 @@ function update_enemy() {
           const attackAnimation = enemy.userData.animations[11];
           if (attackAnimation) {
             const action = enemy.userData.mixer.clipAction(attackAnimation);
+            action.setEffectiveTimeScale(0.75);
             action.reset();
             action.clampWhenFinished = true;
             action.play();
             enemy.userData.isAttacking = true;
-            action.getMixer().addEventListener('finished', function onAttackFinished(event) {
+            action.getMixer().addEventListener('loop', function onAttackFinished(event) {
               if (event.action === action) {
-                // Réduire les vies lorsque l'animation d'attaque est terminée
                 lives -= 1;
                 console.log("Lives restantes : " + lives);
-                // On peut aussi retirer l'écouteur une fois qu'il est utilisé pour éviter plusieurs appels
-                event.target.removeEventListener('finished', onAttackFinished);
+                if (damagesound) {
+                  damagesound.play();
+                }
               }
             });
           }
