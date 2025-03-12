@@ -19,6 +19,48 @@ let damagesound = null;
 let lives = 15;
 let last_shot = Date.now();
 
+let damageFilterMesh = null;
+let damageTexture = null;
+
+function createDamageFilter() {
+  // Charger la texture PNG
+  const textureLoader = new THREE.TextureLoader();
+  damageTexture = textureLoader.load('/webxr/assets/images/template.png');
+
+  console.log(window.innerWidth, window.innerHeight)
+  // Créer la géométrie du filtre (plane qui recouvre l'écran)
+  const geometry = new THREE.PlaneGeometry(0.1, 0.1); // Taille de l'écran (taille unitaire en AR/VR)
+
+  // Créer le matériau avec la texture PNG et activer la transparence
+  const material = new THREE.MeshBasicMaterial({
+    map: damageTexture,
+    opacity: 1,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+
+  // Créer le mesh avec la géométrie et le matériau
+  damageFilterMesh = new THREE.Mesh(geometry, material);
+  damageFilterMesh.rotation.y = 0;
+  // Positionner le filtre juste devant la caméra
+  damageFilterMesh.position.z = -0.5; // Ajustez si nécessaire pour couvrir l'écran du joueur
+  scene.add(damageFilterMesh); // Ajouter à la caméra pour qu'il soit toujours visible
+  camera.add(damageFilterMesh)
+}
+
+function updateDamageFilter() {
+  if (!damageFilterMesh) return;
+
+  // Calculer le pourcentage de vie restante
+  const lifePercentage = Math.max(lives / 15, 0);
+  const maxOpacity = 0.75;
+
+  // L'opacité du filtre augmente avec la baisse de vie
+  const opacity = maxOpacity * (1 - lifePercentage); // Moins de vie = plus d'opacité
+
+  // Appliquer l'opacité au matériau du filtre
+  damageFilterMesh.material.opacity = opacity;
+}
 
 init();
 
@@ -30,6 +72,8 @@ function init() {
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+  createDamageFilter()
 
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
@@ -329,6 +373,7 @@ function update_enemy() {
               if (event.action === action) {
                 lives -= 1;
                 console.log("Lives restantes : " + lives);
+                updateDamageFilter();
                 if (damagesound) {
                   damagesound.play();
                 }
@@ -391,6 +436,5 @@ function animate(timestamp, frame) {
   updateArrows()
   renderer.render(scene, camera);
   update_enemy();
-
-
+  console.log(damageFilterMesh.position)
 }
