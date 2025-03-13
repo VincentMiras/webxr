@@ -62,6 +62,10 @@ function updateDamageFilter() {
   damageFilterMesh.material.opacity = opacity;
 }
 
+
+
+
+
 init();
 
 function init() {
@@ -74,6 +78,19 @@ function init() {
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
   createDamageFilter()
+
+  ////////////////////////////////////   Canvas Lives   ////////////////////////////////////////////////////////////////////
+  const livesCanvas = document.createElement("canvas");
+  const livesCtx = livesCanvas.getContext("2d");
+  livesCanvas.width = 256;
+  livesCanvas.height = 128;
+  const livesTexture = new THREE.CanvasTexture(livesCanvas);
+
+  const livesMaterial = new THREE.SpriteMaterial({ map: livesTexture });
+  const livesSprite = new THREE.Sprite(livesMaterial);
+  livesSprite.scale.set(2, 1, 1);
+  livesSprite.position.set(0, 0, 0);
+  camera.add(livesSprite);
 
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
@@ -436,5 +453,4 @@ function animate(timestamp, frame) {
   updateArrows()
   renderer.render(scene, camera);
   update_enemy();
-  console.log(damageFilterMesh.position)
 }
