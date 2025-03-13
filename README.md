@@ -8,10 +8,11 @@ Un jeu en 3D basé sur Three.js et WebXR, intégrant un système de combat avec 
 ## Description du jeu
 
 Ce petit jeu est un shooter dans lequel une horde de squelettes vous à pris pour cible. Terrassez les, faites les tourner et résister le plus longtemps possible à leurs attaques.
+Faites attention à vous les murs ne les arrêterons pas mais vos flèches seront bien bloquées.
 
 ## 🎮 Fonctionnalités
 - Rendu 3D avec **Three.js**
-- Intégration du jeu dans le monde réel en **AR**
+- Intégration du jeu dans le monde réel en **AR** avec collisions des flèches dans les murs.
 - **Multiples ennemis** avec animations et IA basique
 
 ## 🚀 Installation
@@ -61,10 +62,12 @@ Amusez-vous surtout !
 ## Sources
 
 - Beaucoup de ressources utilisées viennent des cours de M. DOGANIS:
-      https://github.com/fdoganis/three_vite
+      https://github.com/fdoganis/three_vite_xr
   
 - La plupart des mécaniques ont été mises en place grâce à la documentation et aux exemples de threejs.
       (https://threejs.org/docs/, https://threejs.org/examples/)
+
+- Les modèles sont téléchargeables gratuitement et mis à disposition par Quaternius
 
 ## 📜 Licence
 Ce projet est sous licence MIT. Utilisation libre avec attribution.
